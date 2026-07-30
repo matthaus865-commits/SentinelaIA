@@ -1,0 +1,3602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SentinelaIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg-raised: #0f1218;
+    --card: #171a21;
+    --card-hover: #1c2029;
+    --border: #2a2e38;
+    --border-soft: #1e222b;
+    --text: #e8e9ec;
+    --muted: #8b8f9a;
+    --dim: #565b68;
+    --accent: #ff5c39;
+    --accent-dim: rgba(255,92,57,0.12);
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--display);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ---------- LAYOUT SHELL ---------- */
+  .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    border-right: 1px solid var(--border-soft);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-raised);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .brand-mark .moon {
+    fill: var(--muted);
+  }
+
+  .brand-mark .beacon {
+    fill: var(--accent);
+    animation: pulse-dot 2.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .logo-big {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 22px;
+  }
+
+  .logo-big .moon { fill: var(--muted); }
+  .logo-big .beacon {
+    fill: var(--accent);
+    animation: pulse-dot 2.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(1.35); }
+  }
+
+  .brand-name {
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 32px;
+    padding-left: 20px;
+  }
+
+  .nav-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13.5px;
+    transition: background 0.15s ease, color 0.15s ease;
+    border: 1px solid transparent;
+  }
+
+  .nav-item:hover {
+    background: var(--card);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .nav-status {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--ok);
+  }
+
+  .nav-status.dev { background: var(--warn); }
+
+  .nav-item-name { flex: 1; }
+
+  .nav-item-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+
+  .sidebar-footer .row {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ---------- MAIN ---------- */
+  .main {
+    position: relative;
+    min-height: 100vh;
+  }
+
+  .page {
+    display: none;
+    min-height: 100vh;
+    padding: 64px 72px 80px;
+    animation: fade-in 0.35s ease;
+  }
+
+  .page.active { display: block; }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 860px) {
+    .page { padding: 40px 24px 64px; }
+  }
+
+  /* ---------- NEXT BUTTON ---------- */
+  .page-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .page-nav-btn {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .page-nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .page-nav-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0c10;
+    font-weight: 600;
+  }
+
+  .page-nav-btn.primary:hover {
+    color: #0a0c10;
+    opacity: 0.9;
+  }
+
+  /* ---------- generic bits reused across pages ---------- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    width: 16px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1.page-title {
+    font-size: clamp(38px, 5vw, 58px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin-bottom: 20px;
+  }
+
+  p.lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 640px;
+    line-height: 1.6;
+  }
+
+  /* =====================================================
+     COVER PAGE SPECIFIC
+     ===================================================== */
+  .cover-hero {
+    max-width: 760px;
+    margin-bottom: 56px;
+  }
+
+  .cover-copy {
+    font-size: 16.5px;
+    color: var(--muted);
+    line-height: 1.75;
+    max-width: 640px;
+    margin-top: 24px;
+  }
+
+  .cover-copy strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* terminal signature block */
+  .terminal {
+    margin-top: 44px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 640px;
+  }
+
+  .terminal-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .terminal-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+
+  .terminal-body {
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 2.1;
+    color: var(--muted);
+    min-height: 190px;
+  }
+
+  .terminal-line { opacity: 0; animation: type-in 0.4s ease forwards; white-space: pre-wrap; }
+  .terminal-line .ok { color: var(--ok); }
+  .terminal-line .tag { color: var(--accent); }
+  .terminal-line .t { color: var(--dim); margin-right: 10px; }
+
+  @keyframes type-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .terminal-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 12px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+
+  .clients-strip {
+    margin-top: 32px;
+    max-width: 700px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+  }
+
+  .clients-label {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .clients-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 30px;
+  }
+
+  .clients-row span {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* product grid on cover */
+  .grid-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 64px 0 18px;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    max-width: 980px;
+  }
+
+  .product-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  }
+
+  .product-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    background: var(--card-hover);
+  }
+
+  .product-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .product-name {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .product-status {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 100px;
+    background: rgba(52,211,153,0.12);
+    color: var(--ok);
+    white-space: nowrap;
+  }
+
+  .product-status.dev {
+    background: rgba(251,191,36,0.12);
+    color: var(--warn);
+  }
+
+  .product-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  /* ---------- PLACEHOLDER PAGES (produtos ainda não construídos) ---------- */
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+
+  .placeholder-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* =====================================================
+     PRODUCT PAGE — shared components (Triage etc.)
+     ===================================================== */
+  .product-header {
+    max-width: 720px;
+    margin-bottom: 48px;
+  }
+
+  .back-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 28px;
+    transition: color 0.15s ease;
+  }
+  .back-link:hover { color: var(--muted); }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(150px, 220px));
+    gap: 12px;
+    margin: 36px 0 56px;
+  }
+
+  @media (max-width: 640px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+
+  .stat-card .num {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .stat-card.ok .num { color: var(--ok); }
+  .stat-card.danger .num { color: var(--danger); }
+
+  .stat-card .label {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  .section-block {
+    max-width: 780px;
+    margin-bottom: 56px;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+
+  .demo-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--danger);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .section-sub {
+    font-size: 14.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+    max-width: 620px;
+  }
+
+  /* nuance chips */
+  .chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 13px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--card);
+  }
+
+  .chip.understood {
+    border-color: rgba(96,165,250,0.35);
+    color: #93c5fd;
+    background: rgba(96,165,250,0.08);
+  }
+
+  .chip.removed {
+    border-color: rgba(248,113,113,0.35);
+    color: var(--danger);
+    background: rgba(248,113,113,0.08);
+  }
+
+  .chip-caption {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  /* thermometer */
+  .thermometer-wrap {
+    max-width: 620px;
+  }
+
+  .thermometer-track {
+    position: relative;
+    height: 10px;
+    border-radius: 100px;
+    background: linear-gradient(90deg, #f87171 0%, #fbbf24 32%, #a3e635 62%, #34d399 100%);
+    margin: 22px 0 10px;
+  }
+
+  .therm-point {
+    position: absolute;
+    top: -7px;
+    width: 24px;
+    height: 24px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .therm-point .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2.5px solid var(--text);
+    box-shadow: 0 0 0 3px var(--bg);
+  }
+
+  .therm-point .therm-label {
+    position: absolute;
+    top: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .therm-scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 30px;
+  }
+
+  /* simulator */
+  .sim-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .sim-tab {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 118px;
+  }
+
+  .sim-tab-emoji {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .sim-tab-label {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    color: inherit;
+  }
+
+  .sim-tab-count {
+    font-size: 10.5px;
+    color: var(--dim);
+  }
+
+  .sim-tab.active .sim-tab-count { color: rgba(10,12,16,0.65); }
+
+  .sim-tab:hover { color: var(--text); border-color: var(--dim); }
+
+  .sim-tab.active {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .sim-window {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 620px;
+  }
+
+  .sim-source {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+
+  .bubble {
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 90%;
+    margin-bottom: 14px;
+  }
+
+  .bubble-comment {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .bubble-reply {
+    background: var(--accent-dim);
+    border: 1px solid rgba(255,92,57,0.3);
+    color: var(--text);
+    margin-left: auto;
+    margin-bottom: 0;
+  }
+
+  .bubble-reply.removed-bubble {
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.3);
+  }
+
+  .bubble-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+    margin-bottom: 6px;
+  }
+
+  .bubble-reply .bubble-tag { color: var(--accent); text-align: right; width: 100%; }
+  .bubble-reply.removed-bubble .bubble-tag { color: var(--danger); }
+
+  .sim-input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .sim-input:focus { border-color: var(--accent); }
+
+  .sim-textarea {
+    resize: vertical;
+    font-family: var(--display);
+    line-height: 1.5;
+  }
+
+  .sim-field-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 16px 0 6px;
+  }
+
+  .sim-field-label:first-of-type { margin-top: 4px; }
+
+  .sim-locked {
+    color: var(--dim);
+    font-style: italic;
+    background: var(--bg);
+    cursor: not-allowed;
+    border-style: dashed;
+  }
+
+  /* volume panel: pie chart + ranking bars */
+  .volume-panel {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .volume-chart-wrap {
+    flex-shrink: 0;
+    width: 220px;
+    height: 220px;
+  }
+
+  .volume-bars {
+    flex: 1;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .vbar-row .vbar-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    margin-bottom: 6px;
+  }
+
+  .vbar-row .vbar-name { color: var(--text); }
+  .vbar-row .vbar-count { color: var(--muted); }
+
+  .vbar-track {
+    height: 8px;
+    border-radius: 100px;
+    background: var(--border-soft);
+    overflow: hidden;
+  }
+
+  .vbar-fill {
+    height: 100%;
+    border-radius: 100px;
+  }
+
+  /* post breakdown list */
+  .post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .post-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .post-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .post-info { flex: 1; min-width: 0; }
+
+  .post-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .post-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 3px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .post-type {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 100px;
+  }
+
+  .post-type.ads { background: rgba(96,165,250,0.12); color: #93c5fd; }
+  .post-type.organic { background: rgba(52,211,153,0.12); color: var(--ok); }
+
+  .post-stats {
+    display: flex;
+    gap: 18px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .post-stat .n {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .post-stat .l {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .post-stat.removed .n { color: var(--danger); }
+
+  /* =====================================================
+     PULSE — painel de live (fundo borrado animado + chat)
+     ===================================================== */
+  .live-panel {
+    display: flex;
+    gap: 20px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+
+  .live-video {
+    flex: 1.2;
+    min-width: 260px;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    background: #0a0c10;
+  }
+
+  .live-video::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,92,57,0.55), transparent 55%),
+      radial-gradient(circle at 75% 60%, rgba(96,165,250,0.5), transparent 55%),
+      radial-gradient(circle at 50% 85%, rgba(52,211,153,0.4), transparent 55%),
+      radial-gradient(circle at 85% 15%, rgba(251,191,36,0.35), transparent 50%);
+    filter: blur(38px);
+    animation: live-drift 9s ease-in-out infinite;
+  }
+
+  @keyframes live-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(4%, -3%) scale(1.06); }
+    66% { transform: translate(-3%, 4%) scale(1.03); }
+  }
+
+  .live-badge, .live-viewers {
+    position: absolute;
+    top: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 11px;
+    border-radius: 100px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .live-badge {
+    left: 14px;
+    background: var(--danger);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .live-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    animation: blink 1.1s step-end infinite;
+  }
+
+  .live-viewers {
+    right: 14px;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    backdrop-filter: blur(4px);
+  }
+
+  .live-platforms {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 2;
+    display: flex;
+    gap: 6px;
+  }
+
+  .live-platform-chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    padding: 4px 9px;
+    border-radius: 100px;
+    backdrop-filter: blur(4px);
+  }
+
+  .live-chat {
+    flex: 1;
+    min-width: 260px;
+    max-height: 340px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+  }
+
+  .live-chat-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+
+  .live-chat-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .chat-msg {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    animation: chat-in 0.35s ease;
+  }
+
+  @keyframes chat-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .chat-msg .chat-plat {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--dim);
+    margin-right: 6px;
+  }
+
+  .chat-msg.removed {
+    border-color: rgba(248,113,113,0.35);
+    background: rgba(248,113,113,0.06);
+    text-decoration: line-through;
+    color: var(--dim);
+  }
+
+  .chat-msg .chat-reply {
+    display: block;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dashed var(--border);
+    text-decoration: none;
+    color: var(--accent);
+    font-size: 11.5px;
+  }
+
+  /* =====================================================
+     ECHO — fluxo comentário -> DM
+     ===================================================== */
+  .flow-panel {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .flow-arrow {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--dim);
+    flex-shrink: 0;
+  }
+
+  .flow-comment-card {
+    flex: 1;
+    min-width: 240px;
+    max-width: 300px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .flow-comment-card .fc-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+
+  .flow-comment-card .fc-text {
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .flow-comment-card .fc-reply {
+    font-size: 12px;
+    color: var(--accent);
+    border-top: 1px dashed var(--border);
+    padding-top: 10px;
+  }
+
+  .dm-mockup {
+    flex-shrink: 0;
+    width: 300px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    overflow: hidden;
+  }
+
+  .dm-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dm-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #fbbf24);
+    flex-shrink: 0;
+  }
+
+  .dm-name { font-weight: 600; font-size: 13px; }
+  .dm-status { font-size: 10.5px; color: var(--ok); font-family: var(--mono); }
+
+  .dm-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 210px;
+    justify-content: flex-end;
+  }
+
+  .dm-bubble {
+    max-width: 82%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    animation: chat-in 0.35s ease;
+  }
+
+  .dm-bubble.in {
+    background: var(--card);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  .dm-bubble.out {
+    background: var(--accent);
+    color: #0a0c10;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+  }
+
+  .dm-typing {
+    align-self: flex-start;
+    display: flex;
+    gap: 3px;
+    padding: 10px 13px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+  }
+
+  .dm-typing span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--dim);
+    animation: typing-dot 1.2s ease-in-out infinite;
+  }
+
+  .dm-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .dm-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes typing-dot {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-2px); }
+  }
+
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .flow-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .flow-step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--bg);
+    background: var(--accent);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .flow-step.fallback .flow-step-num {
+    background: var(--card);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .flow-step-text { font-size: 13.5px; line-height: 1.55; }
+  .flow-step-text strong { color: var(--text); }
+  .flow-step-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-left: 8px;
+    background: rgba(52,211,153,0.12);
+    color: var(--ok);
+  }
+
+  .flow-step.fallback .flow-step-tag {
+    background: var(--card);
+    color: var(--dim);
+    border: 1px solid var(--border);
+  }
+
+  /* =====================================================
+     ARGUS — banner de impacto + relatório real
+     ===================================================== */
+  .impact-banner {
+    background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(52,211,153,0.02));
+    border: 1px solid rgba(52,211,153,0.3);
+    border-radius: 14px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    max-width: 640px;
+    flex-wrap: wrap;
+  }
+
+  .impact-num {
+    font-family: var(--display);
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--ok);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .impact-text { max-width: 340px; }
+  .impact-text .it-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .impact-text .it-sub { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+  .real-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ok);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .argus-domain {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .argus-domain-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .argus-domain-head h3 { font-size: 15.5px; font-weight: 700; }
+
+  .argus-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 9px;
+    border-radius: 100px;
+  }
+
+  .argus-badge.ok { background: rgba(52,211,153,0.12); color: var(--ok); }
+  .argus-badge.danger { background: rgba(248,113,113,0.12); color: var(--danger); }
+
+  .argus-domain-meta {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--dim);
+    margin-bottom: 14px;
+  }
+
+  .argus-adv {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    margin-bottom: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease;
+  }
+
+  .argus-adv:hover { border-color: var(--accent); }
+
+  .argus-adv img {
+    width: 46px;
+    height: 46px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .argus-adv-info { flex: 1; min-width: 0; }
+  .argus-adv-name { font-size: 13px; font-weight: 600; }
+  .argus-adv-detail { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  /* diagrama de fluxo visual */
+  .flow-diagram {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    flex-wrap: wrap;
+    max-width: 780px;
+  }
+
+  .flow-node {
+    flex: 1;
+    min-width: 170px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .flow-node-icon { font-size: 26px; margin-bottom: 10px; }
+  .flow-node-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .flow-node-sub { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+  .flow-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    color: var(--dim);
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .flow-diagram { flex-direction: column; }
+    .flow-connector { transform: rotate(90deg); padding: 6px 0; }
+  }
+
+  /* mockup de anúncio de busca (fake, sem imagem externa) */
+  .gad-mock {
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #202124;
+  }
+
+  .gad-ad-label {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-right: 6px;
+  }
+
+  .gad-url { font-size: 12.5px; color: #202124; margin: 3px 0 1px; }
+  .gad-headline { font-size: 16.5px; color: #1a0dab; margin: 2px 0; font-weight: 400; }
+  .gad-desc { font-size: 12.5px; color: #4d5156; line-height: 1.4; }
+
+  .argus-example-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .argus-example-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .argus-example-brand { font-size: 13px; font-weight: 700; }
+
+  .argus-example-caption {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 10px;
+  }
+
+  .layer-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .layer-card {
+    flex: 1;
+    min-width: 220px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  .layer-icon { font-size: 22px; margin-bottom: 8px; }
+  .layer-title { font-weight: 700; font-size: 13.5px; margin-bottom: 6px; }
+  .layer-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* =====================================================
+     RADAR — canais de alerta + mockup de notificação
+     ===================================================== */
+  .channel-grid {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .channel-card {
+    flex: 1;
+    min-width: 200px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+  }
+
+  .channel-card.easy { border-color: rgba(52,211,153,0.3); }
+  .channel-card.hard { border-color: rgba(251,191,36,0.3); }
+
+  .channel-icon { font-size: 22px; margin-bottom: 8px; }
+  .channel-title { font-weight: 700; font-size: 13.5px; margin-bottom: 6px; }
+  .channel-desc { font-size: 12px; color: var(--muted); line-height: 1.55; margin-bottom: 10px; }
+
+  .channel-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 100px;
+  }
+
+  .channel-badge.easy { background: rgba(52,211,153,0.12); color: var(--ok); }
+  .channel-badge.hard { background: rgba(251,191,36,0.12); color: var(--warn); }
+
+  .alert-mockup {
+    max-width: 380px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .alert-mockup .am-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .alert-mockup .am-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+
+  .alert-mockup .am-body {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .alert-mockup .am-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 6px;
+  }
+
+  /* =====================================================
+     FORGE — portfólio de vídeo (placeholder até receber os reais)
+     ===================================================== */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+  }
+
+  .portfolio-card {
+    aspect-ratio: 9 / 14;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: #0a0c10;
+    border: 1px solid var(--border);
+  }
+
+  .portfolio-card::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    filter: blur(34px);
+    animation: live-drift 10s ease-in-out infinite;
+  }
+
+  .portfolio-card.style-1::before {
+    background:
+      radial-gradient(circle at 25% 25%, rgba(255,92,57,0.5), transparent 55%),
+      radial-gradient(circle at 75% 70%, rgba(96,165,250,0.45), transparent 55%);
+  }
+
+  .portfolio-card.style-2::before {
+    background:
+      radial-gradient(circle at 70% 20%, rgba(52,211,153,0.5), transparent 55%),
+      radial-gradient(circle at 25% 75%, rgba(251,191,36,0.4), transparent 55%);
+  }
+
+  .portfolio-card.style-3::before {
+    background:
+      radial-gradient(circle at 30% 70%, rgba(167,139,250,0.5), transparent 55%),
+      radial-gradient(circle at 75% 25%, rgba(248,113,113,0.35), transparent 55%);
+  }
+
+  .portfolio-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .portfolio-play span {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #fff;
+  }
+
+  .portfolio-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 12px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: #fff;
+  }
+
+  .video-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #000;
+    aspect-ratio: 9 / 16;
+  }
+
+  .video-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .video-card .vc-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: #fff;
+    background: rgba(0,0,0,0.5);
+    padding: 3px 8px;
+    border-radius: 100px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand" data-goto="cover">
+      <svg class="brand-mark" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <mask id="moonMaskSmall">
+          <rect width="40" height="40" fill="white"/>
+          <circle cx="26" cy="13" r="11" fill="black"/>
+        </mask>
+        <circle cx="18" cy="20" r="13" class="moon" mask="url(#moonMaskSmall)"/>
+        <circle class="beacon" cx="31" cy="9" r="2.6"/>
+      </svg>
+      <span class="brand-name">SentinelaIA</span>
+    </div>
+    <div class="brand-sub">by Turno da Madrugada</div>
+
+    <div class="nav-label">Produtos</div>
+    <ul class="nav-list" id="navList">
+      <li class="nav-item" data-goto="triage">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Triage</span>
+        <span class="nav-item-num">01</span>
+      </li>
+      <li class="nav-item" data-goto="loop">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Loop</span>
+        <span class="nav-item-num">02</span>
+      </li>
+      <li class="nav-item" data-goto="pulse">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Pulse</span>
+        <span class="nav-item-num">03</span>
+      </li>
+      <li class="nav-item" data-goto="echo">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Echo</span>
+        <span class="nav-item-num">04</span>
+      </li>
+      <li class="nav-item" data-goto="argus">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Argus</span>
+        <span class="nav-item-num">05</span>
+      </li>
+      <li class="nav-item" data-goto="radar">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Radar</span>
+        <span class="nav-item-num">06</span>
+      </li>
+      <li class="nav-item" data-goto="forge">
+        <span class="nav-status"></span>
+        <span class="nav-item-name">Forge</span>
+        <span class="nav-item-num">07</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="row"><span>status</span><span style="color:var(--ok)">operacional</span></div>
+      <div class="row"><span>build</span><span>2026.07</span></div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <!-- ===================== PAGE 0 — COVER ===================== -->
+    <section class="page active" id="page-cover">
+      <div class="cover-hero">
+        <svg class="logo-big" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <mask id="moonMaskBig">
+            <rect width="40" height="40" fill="white"/>
+            <circle cx="26" cy="13" r="11" fill="black"/>
+          </mask>
+          <circle cx="18" cy="20" r="13" class="moon" mask="url(#moonMaskBig)"/>
+          <circle class="beacon" cx="31" cy="9" r="2.6"/>
+        </svg>
+        <div class="eyebrow">Turno da Madrugada apresenta</div>
+        <h1 class="page-title">SentinelaIA</h1>
+        <p class="lede">Um hub de automações com IA, criado pra trabalhar enquanto você dorme.</p>
+
+        <div class="cover-copy">
+          A ideia é simples: <strong>automatizar todo tipo de tarefa manual</strong> — comentário, DM, live, marca, tag, criativo — pra que nada dependa de alguém acordado às 3 da manhã. Cada produto abaixo resolve uma dor específica. Juntos, formam uma central que roda sozinha, o turno inteiro.
+        </div>
+
+        <div class="terminal">
+          <div class="terminal-head">
+            <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+            <span style="margin-left:6px">sentinela — turno ativo</span>
+          </div>
+          <div class="terminal-body" id="terminalBody"></div>
+        </div>
+
+        <div class="clients-strip">
+          <div class="clients-label">já roda hoje pra</div>
+          <div class="clients-row">
+            <span>Thiago Nigro</span>
+            <span>Box 24×7</span>
+            <span>Grupo Primo</span>
+            <span>Bruno Perini</span>
+            <span>Santa Prata</span>
+            <span>Ororo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-label">Produtos ativos no hub</div>
+      <div class="product-grid">
+        <div class="product-card" data-goto="triage">
+          <div class="product-card-top"><span class="product-name">Triage</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">Classifica e modera comentários orgânicos e de anúncios no Instagram, em tempo real.</div>
+        </div>
+        <div class="product-card" data-goto="loop">
+          <div class="product-card-top"><span class="product-name">Loop</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">O mesmo motor do Triage, adaptado pra comentários de vídeos no YouTube.</div>
+        </div>
+        <div class="product-card" data-goto="pulse">
+          <div class="product-card-top"><span class="product-name">Pulse</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">Moderação de chat ao vivo — Instagram, YouTube e Twitch — durante a transmissão.</div>
+        </div>
+        <div class="product-card" data-goto="echo">
+          <div class="product-card-top"><span class="product-name">Echo</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">Responde automaticamente por DM quem comenta, sem intervenção manual.</div>
+        </div>
+        <div class="product-card" data-goto="argus">
+          <div class="product-card-top"><span class="product-name">Argus</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">Vigia o Google em busca de quem anuncia usando a marca do cliente sem autorização.</div>
+        </div>
+        <div class="product-card" data-goto="radar">
+          <div class="product-card-top"><span class="product-name">Radar</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">Testa as tags de conversão todo dia e avisa por e-mail no instante em que algo quebra.</div>
+        </div>
+        <div class="product-card" data-goto="forge">
+          <div class="product-card-top"><span class="product-name">Forge</span><span class="product-status">ativo</span></div>
+          <div class="product-desc">Criação de vídeos de anúncio com IA — do motion de uma imagem à geração do zero.</div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <span></span>
+        <button class="page-nav-btn primary" data-goto="triage">Ver Triage →</button>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 1..7 — placeholders ===================== -->
+    <section class="page" id="page-triage">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">01 · by SentinelaIA</div>
+        <h1 class="page-title">Triage</h1>
+        <p class="lede">Modera comentários de posts orgânicos e anúncios no Instagram — e não trata todo mundo como "positivo ou negativo".</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card ok">
+          <div class="num">5.000+</div>
+          <div class="label">respostas automáticas enviadas</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">300</div>
+          <div class="label">leads gerados</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="num">12.500</div>
+          <div class="label">comentários negativos apagados</div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title">Entende o tom, não só a palavra</div>
+        <div class="section-sub">A maioria dos moderadores só enxerga "bom" ou "ruim". O Triage identifica a intenção por trás do comentário antes de decidir o que fazer com ele.</div>
+
+        <div class="chip-caption">Reconhece e trata com nuance</div>
+        <div class="chip-group">
+          <span class="chip understood">Deboche</span>
+          <span class="chip understood">Cinismo</span>
+          <span class="chip understood">Carisma</span>
+          <span class="chip understood">Simpatia</span>
+          <span class="chip understood">Lead</span>
+          <span class="chip understood">Elogio</span>
+          <span class="chip understood">Dúvida</span>
+        </div>
+
+        <div class="chip-caption">Remove automaticamente</div>
+        <div class="chip-group">
+          <span class="chip removed">Ofensivo</span>
+          <span class="chip removed">Discurso de ódio</span>
+          <span class="chip removed">Racista</span>
+          <span class="chip removed">Pejorativo</span>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title">Termômetro de comentário</div>
+        <div class="section-sub">Cada comentário recebe uma posição numa escala — não um rótulo binário. É essa granularidade que separa deboche de ofensa real.</div>
+
+        <div class="thermometer-wrap">
+          <div class="thermometer-track">
+            <div class="therm-point" style="left: 6%;">
+              <div class="dot"></div>
+              <div class="therm-label">racista</div>
+            </div>
+            <div class="therm-point" style="left: 34%;">
+              <div class="dot"></div>
+              <div class="therm-label">deboche</div>
+            </div>
+            <div class="therm-point" style="left: 58%;">
+              <div class="dot"></div>
+              <div class="therm-label">dúvida</div>
+            </div>
+            <div class="therm-point" style="left: 90%;">
+              <div class="dot"></div>
+              <div class="therm-label">elogio</div>
+            </div>
+          </div>
+          <div class="therm-scale">
+            <span>remover</span>
+            <span>responder com cuidado</span>
+            <span>responder normal</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">O que tá tendo mais hoje</div>
+        <div class="section-sub">Volume da semana, por categoria — o cliente enxerga na hora onde a conversa tá se concentrando.</div>
+
+        <div class="volume-panel">
+          <div class="volume-chart-wrap">
+            <canvas id="volumeChart" width="220" height="220"></canvas>
+          </div>
+
+          <div class="volume-bars" id="volumeBars"></div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Comentários por post</div>
+        <div class="section-sub">Nada fica genérico — todo comentário é rastreado até o post ou anúncio de origem. O cliente sabe exatamente onde a conversa aconteceu.</div>
+
+        <div class="post-list" id="postList"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Simule uma resposta</div>
+        <div class="section-sub">Exemplo com a <strong style="color:var(--text)">Box 24×7</strong>, cliente real — empresa que aluga extratora, secador de cabelo e PS5. Você configura o que o Triage responde em cada categoria — ele só executa. A única exceção é o ofensivo, que é removido, não respondido.</div>
+
+        <div class="sim-window" style="max-width:680px; margin-bottom:24px;">
+          <div class="sim-source">configure a resposta por categoria</div>
+
+          <label class="sim-field-label">Lead</label>
+          <textarea id="cfgLead" class="sim-input sim-textarea" rows="2">Tem sim! 🎮 Baixa o app da Box 24×7 e já garante o seu antes que lote — reserva em menos de 1 minuto.</textarea>
+
+          <label class="sim-field-label">Dúvida</label>
+          <textarea id="cfgDuvida" class="sim-input sim-textarea" rows="2">Baixa o app da Box 24×7 📲 lá você escolhe o tempo de aluguel e já vê o preço na hora, sem mistério.</textarea>
+
+          <label class="sim-field-label">Elogio</label>
+          <textarea id="cfgElogio" class="sim-input sim-textarea" rows="2">Que isso, fico muito feliz 🥹 obrigado por confiar na gente!</textarea>
+
+          <label class="sim-field-label">Elogio (bom humor)</label>
+          <textarea id="cfgFun" class="sim-input sim-textarea" rows="2">uffa kkkk vou salvar melhor ainda com esse cupom, toma aí 🎁</textarea>
+
+          <label class="sim-field-label">Ofensivo / racista / pejorativo</label>
+          <div class="sim-input sim-locked">Removido automaticamente — nenhuma resposta é enviada</div>
+        </div>
+
+        <div class="sim-tabs" id="simTabs">
+          <button class="sim-tab active" data-group="triage" data-sim="lead">
+            <span class="sim-tab-emoji">🤔😊</span>
+            <span class="sim-tab-label">Lead</span>
+            <span class="sim-tab-count">90 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="triage" data-sim="duvida">
+            <span class="sim-tab-emoji">🤔</span>
+            <span class="sim-tab-label">Dúvida</span>
+            <span class="sim-tab-count">150 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="triage" data-sim="elogio">
+            <span class="sim-tab-emoji">😊</span>
+            <span class="sim-tab-label">Elogio</span>
+            <span class="sim-tab-count">210 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="triage" data-sim="fun">
+            <span class="sim-tab-emoji">🤣</span>
+            <span class="sim-tab-label">Elogio (bom humor)</span>
+            <span class="sim-tab-count">parte do elogio</span>
+          </button>
+          <button class="sim-tab" data-group="triage" data-sim="ofensivo">
+            <span class="sim-tab-emoji">😠</span>
+            <span class="sim-tab-label">Ofensivo</span>
+            <span class="sim-tab-count">68 clientes</span>
+          </button>
+        </div>
+
+        <div class="sim-window">
+          <div class="sim-source" id="simPostRef">comentário no post · Box 24×7</div>
+          <div id="simCommentPreview" class="bubble bubble-comment" style="margin-bottom:0;"></div>
+          <div id="simContent" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="cover">← Hub</button>
+        <button class="page-nav-btn primary" data-goto="loop">Ver Loop →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-loop">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">02 · by SentinelaIA</div>
+        <h1 class="page-title">Loop</h1>
+        <p class="lede">O mesmo Triage, rodando nos comentários dos vídeos do canal no YouTube.</p>
+      </div>
+
+      <div class="section-block" style="margin-bottom: 40px;">
+        <div class="section-sub" style="font-size: 15px;">Mesmo motor, mesma inteligência — muda o terreno: comentário de vídeo costuma ser mais longo, referencia um momento específico (tipo "aos 2:14 vocês erraram o preço"), e o YouTube atrai uma praga que o Instagram quase não tem — bot de spam disparando link de golpe nos comentários mais vistos.</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card danger">
+          <div class="num">4.000+</div>
+          <div class="label">comentários apagados</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">1.000</div>
+          <div class="label">respondidos automaticamente</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">95</div>
+          <div class="label">leads gerados</div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="chip-caption">Reconhece e trata com nuance</div>
+        <div class="chip-group">
+          <span class="chip understood">Deboche</span>
+          <span class="chip understood">Cinismo</span>
+          <span class="chip understood">Carisma</span>
+          <span class="chip understood">Simpatia</span>
+          <span class="chip understood">Lead</span>
+          <span class="chip understood">Elogio</span>
+          <span class="chip understood">Dúvida</span>
+          <span class="chip understood">Referência a timestamp</span>
+        </div>
+
+        <div class="chip-caption">Remove automaticamente</div>
+        <div class="chip-group">
+          <span class="chip removed">Spam / bot</span>
+          <span class="chip removed">Ofensivo</span>
+          <span class="chip removed">Discurso de ódio</span>
+          <span class="chip removed">Racista</span>
+          <span class="chip removed">Pejorativo</span>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">O que tá tendo mais hoje</div>
+        <div class="section-sub">Volume da semana, por categoria.</div>
+
+        <div class="volume-panel">
+          <div class="volume-chart-wrap">
+            <canvas id="volumeChartLoop" width="220" height="220"></canvas>
+          </div>
+
+          <div class="volume-bars" id="volumeBarsLoop"></div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Comentários por vídeo</div>
+        <div class="section-sub">Cada comentário é rastreado até o vídeo de origem — inclusive vídeo de anúncio, que costuma puxar mais spam.</div>
+
+        <div class="post-list" id="videoList"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Simule uma resposta</div>
+        <div class="section-sub">Exemplo com a <strong style="color:var(--text)">Box 24×7</strong>. Você configura o que o Loop responde em cada categoria — ele só executa. Ofensivo e spam são removidos, não respondidos.</div>
+
+        <div class="sim-window" style="max-width:680px; margin-bottom:24px;">
+          <div class="sim-source">configure a resposta por categoria</div>
+
+          <label class="sim-field-label">Lead</label>
+          <textarea id="cfgLeadLoop" class="sim-input sim-textarea" rows="2">Boa! Baixa o app da Box 24×7 e já garante a reserva antes que lote — é o mesmo que aparece no vídeo 🎮</textarea>
+
+          <label class="sim-field-label">Dúvida</label>
+          <textarea id="cfgDuvidaLoop" class="sim-input sim-textarea" rows="2">Boa pergunta! Baixa o app da Box 24×7 📲 lá tem o preço certinho e atualizado, sem depender do vídeo.</textarea>
+
+          <label class="sim-field-label">Elogio</label>
+          <textarea id="cfgElogioLoop" class="sim-input sim-textarea" rows="2">Muito obrigado! 🙌 fico feliz que ajudou, se tiver dúvida em algum outro vídeo é só chamar.</textarea>
+
+          <label class="sim-field-label">Elogio (bom humor)</label>
+          <textarea id="cfgFunLoop" class="sim-input sim-textarea" rows="2">uffa kkkk que bom que rolou, toma um cupom pra próxima 🎁</textarea>
+
+          <label class="sim-field-label">Spam / bot</label>
+          <div class="sim-input sim-locked">Removido automaticamente — nenhuma resposta é enviada</div>
+
+          <label class="sim-field-label">Ofensivo / racista / pejorativo</label>
+          <div class="sim-input sim-locked">Removido automaticamente — nenhuma resposta é enviada</div>
+        </div>
+
+        <div class="sim-tabs" id="simTabsLoop">
+          <button class="sim-tab active" data-group="loop" data-sim="lead">
+            <span class="sim-tab-emoji">🤔😊</span>
+            <span class="sim-tab-label">Lead</span>
+            <span class="sim-tab-count">85 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="loop" data-sim="duvida">
+            <span class="sim-tab-emoji">🤔</span>
+            <span class="sim-tab-label">Dúvida</span>
+            <span class="sim-tab-count">175 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="loop" data-sim="elogio">
+            <span class="sim-tab-emoji">😊</span>
+            <span class="sim-tab-label">Elogio</span>
+            <span class="sim-tab-count">260 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="loop" data-sim="fun">
+            <span class="sim-tab-emoji">🤣</span>
+            <span class="sim-tab-label">Elogio (bom humor)</span>
+            <span class="sim-tab-count">parte do elogio</span>
+          </button>
+          <button class="sim-tab" data-group="loop" data-sim="spam">
+            <span class="sim-tab-emoji">🤖</span>
+            <span class="sim-tab-label">Spam / bot</span>
+            <span class="sim-tab-count">61 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="loop" data-sim="ofensivo">
+            <span class="sim-tab-emoji">😠</span>
+            <span class="sim-tab-label">Ofensivo</span>
+            <span class="sim-tab-count">34 clientes</span>
+          </button>
+        </div>
+
+        <div class="sim-window">
+          <div class="sim-source" id="simPostRefLoop">comentário no vídeo · Box 24×7</div>
+          <div id="simCommentPreviewLoop" class="bubble bubble-comment" style="margin-bottom:0;"></div>
+          <div id="simContentLoop" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="triage">← Triage</button>
+        <button class="page-nav-btn primary" data-goto="pulse">Ver Pulse →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-pulse">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">03 · by SentinelaIA</div>
+        <h1 class="page-title">Pulse</h1>
+        <p class="lede">Moderação de chat ao vivo — Instagram, YouTube e Twitch — no instante em que acontece.</p>
+      </div>
+
+      <div class="section-block" style="margin-bottom: 40px;">
+        <div class="section-sub" style="font-size: 15px;">Mesmo motor do Triage e do Loop, agora em tempo real. Enquanto a live tá no ar, o Pulse lê cada mensagem do chat, responde na hora quem tem dúvida ou intenção de compra, e remove spam/ofensa antes que vire print.</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card danger">
+          <div class="num">45.000</div>
+          <div class="label">comentários apagados</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="num">300</div>
+          <div class="label">usuários banidos</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">780</div>
+          <div class="label">leads gerados</div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="chip-caption">Reconhece e trata com nuance</div>
+        <div class="chip-group">
+          <span class="chip understood">Deboche</span>
+          <span class="chip understood">Cinismo</span>
+          <span class="chip understood">Hype / torcida</span>
+          <span class="chip understood">Carisma</span>
+          <span class="chip understood">Lead</span>
+          <span class="chip understood">Elogio</span>
+          <span class="chip understood">Dúvida</span>
+        </div>
+
+        <div class="chip-caption">Remove automaticamente</div>
+        <div class="chip-group">
+          <span class="chip removed">Spam / bot</span>
+          <span class="chip removed">Flood</span>
+          <span class="chip removed">Ofensivo</span>
+          <span class="chip removed">Discurso de ódio</span>
+          <span class="chip removed">Racista</span>
+          <span class="chip removed">Pejorativo</span>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 960px;">
+        <div class="section-title">Ao vivo, agora</div>
+        <div class="section-sub">Simulação de uma live rodando — o chat entra em tempo real e o Pulse já reage: responde ou remove antes do próximo espectador ver.</div>
+
+        <div class="live-panel">
+          <div class="live-video">
+            <div class="live-badge"><span class="dot"></span>AO VIVO</div>
+            <div class="live-viewers" id="liveViewers">👁 1.284</div>
+            <div class="live-platforms">
+              <span class="live-platform-chip">📸 Instagram</span>
+              <span class="live-platform-chip">▶️ YouTube</span>
+              <span class="live-platform-chip">🟣 Twitch</span>
+            </div>
+          </div>
+
+          <div class="live-chat">
+            <div class="live-chat-label">chat unificado · 3 plataformas</div>
+            <div class="live-chat-feed" id="liveChatFeed"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">O que tá tendo mais hoje</div>
+        <div class="section-sub">Volume das mensagens de chat da semana, por categoria.</div>
+
+        <div class="volume-panel">
+          <div class="volume-chart-wrap">
+            <canvas id="volumeChartPulse" width="220" height="220"></canvas>
+          </div>
+
+          <div class="volume-bars" id="volumeBarsPulse"></div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Mensagens por plataforma</div>
+        <div class="section-sub">O mesmo chat, cobrindo as 3 telas ao mesmo tempo — sem precisar de moderador em cada uma.</div>
+
+        <div class="post-list" id="platformList"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Simule uma resposta</div>
+        <div class="section-sub">Exemplo com a <strong style="color:var(--text)">Box 24×7</strong> em live. Você configura o que o Pulse responde em cada categoria — ele só executa.</div>
+
+        <div class="sim-window" style="max-width:680px; margin-bottom:24px;">
+          <div class="sim-source">configure a resposta por categoria</div>
+
+          <label class="sim-field-label">Lead</label>
+          <textarea id="cfgLeadPulse" class="sim-input sim-textarea" rows="2">Consegue sim! Baixa o app da Box 24×7 agora que ainda dá tempo de garantir antes da live acabar 🎮</textarea>
+
+          <label class="sim-field-label">Dúvida</label>
+          <textarea id="cfgDuvidaPulse" class="sim-input sim-textarea" rows="2">Vai até às 22h! Fica com a gente que ainda tem sorteio de cupom 😄</textarea>
+
+          <label class="sim-field-label">Elogio</label>
+          <textarea id="cfgElogioPulse" class="sim-input sim-textarea" rows="2">Muito obrigado! 🙌 valeu por acompanhar a live com a gente!</textarea>
+
+          <label class="sim-field-label">Spam / bot / flood</label>
+          <div class="sim-input sim-locked">Removido automaticamente — nenhuma resposta é enviada</div>
+
+          <label class="sim-field-label">Ofensivo / racista / pejorativo</label>
+          <div class="sim-input sim-locked">Removido automaticamente — nenhuma resposta é enviada</div>
+        </div>
+
+        <div class="sim-tabs" id="simTabsPulse">
+          <button class="sim-tab active" data-group="pulse" data-sim="lead">
+            <span class="sim-tab-emoji">🤔😊</span>
+            <span class="sim-tab-label">Lead</span>
+            <span class="sim-tab-count">180 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="pulse" data-sim="duvida">
+            <span class="sim-tab-emoji">🤔</span>
+            <span class="sim-tab-label">Dúvida</span>
+            <span class="sim-tab-count">95 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="pulse" data-sim="elogio">
+            <span class="sim-tab-emoji">😊</span>
+            <span class="sim-tab-label">Elogio</span>
+            <span class="sim-tab-count">65 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="pulse" data-sim="spam">
+            <span class="sim-tab-emoji">🤖</span>
+            <span class="sim-tab-label">Spam / flood</span>
+            <span class="sim-tab-count">58 clientes</span>
+          </button>
+          <button class="sim-tab" data-group="pulse" data-sim="ofensivo">
+            <span class="sim-tab-emoji">😠</span>
+            <span class="sim-tab-label">Ofensivo</span>
+            <span class="sim-tab-count">31 clientes</span>
+          </button>
+        </div>
+
+        <div class="sim-window">
+          <div class="sim-source" id="simPostRefPulse">mensagem no chat da live · Box 24×7</div>
+          <div id="simCommentPreviewPulse" class="bubble bubble-comment" style="margin-bottom:0;"></div>
+          <div id="simContentPulse" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="loop">← Loop</button>
+        <button class="page-nav-btn primary" data-goto="echo">Ver Echo →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-echo">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">04 · by SentinelaIA</div>
+        <h1 class="page-title">Echo</h1>
+        <p class="lede">Transforma comentário em conversa de DM — dentro das regras do Instagram, não em cima delas.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card ok">
+          <div class="num">250</div>
+          <div class="label">DMs respondidas na semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">50</div>
+          <div class="label">DMs disparadas automaticamente</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">50</div>
+          <div class="label">leads gerados — maior taxa de qualificação</div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 720px;">
+        <div class="section-title">Como funciona, dentro da regra do Meta</div>
+        <div class="section-sub">O Instagram não deixa mandar DM pra quem você quiser — e o Echo foi desenhado em volta disso, não tentando burlar. São 2 fluxos, o principal e um de segurança:</div>
+
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div class="flow-step-text"><strong>Fluxo principal:</strong> o comentário recebe uma resposta pública convidando a pessoa a chamar no direct. Quando ela manda a primeira mensagem, o Echo já responde — sem limite de 1-por-comentário, porque foi ela quem iniciou.<span class="flow-step-tag">a maioria dos casos</span></div>
+          </div>
+          <div class="flow-step fallback">
+            <div class="flow-step-num">2</div>
+            <div class="flow-step-text"><strong>Fallback:</strong> pra quem comentou e não chamou, o Echo dispara a DM automática permitida pelo Meta — 1 por comentário, dentro de 7 dias — garantindo que ninguém fica de fora.<span class="flow-step-tag">rede de segurança</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="chip-caption">Reconhece e trata com nuance</div>
+        <div class="chip-group">
+          <span class="chip understood">Lead quente</span>
+          <span class="chip understood">Dúvida</span>
+          <span class="chip understood">Curiosidade fria</span>
+          <span class="chip understood">Deboche</span>
+          <span class="chip understood">Carisma</span>
+        </div>
+
+        <div class="chip-caption">Não envia DM</div>
+        <div class="chip-group">
+          <span class="chip removed">Spam / bot</span>
+          <span class="chip removed">Ofensivo</span>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 960px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Do comentário à conversa</div>
+        <div class="section-sub">O comentário público vira o gatilho — a conversa de verdade acontece na DM.</div>
+
+        <div class="flow-panel">
+          <div class="flow-comment-card">
+            <div class="fc-label">comentário no post · Box 24×7</div>
+            <div class="fc-text">"quero alugar o PS5 pro fim de semana, ainda tem disponível?"</div>
+            <div class="fc-reply">→ Chama no direct que a gente te ajuda! 📩</div>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="dm-mockup">
+            <div class="dm-header">
+              <div class="dm-avatar"></div>
+              <div>
+                <div class="dm-name">Box 24×7</div>
+                <div class="dm-status">● responde na hora</div>
+              </div>
+            </div>
+            <div class="dm-body" id="echoDmBody"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">O que tá tendo mais hoje</div>
+        <div class="section-sub">Volume da semana, por categoria.</div>
+
+        <div class="volume-panel">
+          <div class="volume-chart-wrap">
+            <canvas id="volumeChartEcho" width="220" height="220"></canvas>
+          </div>
+
+          <div class="volume-bars" id="volumeBarsEcho"></div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 900px;">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Conversas por post</div>
+        <div class="section-sub">Cada lead é rastreado até o post que originou a conversa.</div>
+
+        <div class="post-list" id="echoPostList"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="demo-tag">Ex. semanal de um cliente</div>
+        <div class="section-title">Simule uma resposta</div>
+        <div class="section-sub">Exemplo com a <strong style="color:var(--text)">Box 24×7</strong>. Você configura a DM que o Echo manda em cada categoria.</div>
+
+        <div class="sim-window" style="max-width:680px; margin-bottom:24px;">
+          <div class="sim-source">configure a DM por categoria</div>
+
+          <label class="sim-field-label">Lead quente</label>
+          <textarea id="cfgLeadEcho" class="sim-input sim-textarea" rows="2">Boa! Pra fechar o PS5 desse fim de semana é só me passar seu CEP que eu já confirmo a disponibilidade 🎮</textarea>
+
+          <label class="sim-field-label">Dúvida</label>
+          <textarea id="cfgDuvidaEcho" class="sim-input sim-textarea" rows="2">Claro! O aluguel funciona por diária, com entrega em casa. Quer que eu já te passe os valores?</textarea>
+
+          <label class="sim-field-label">Curiosidade fria</label>
+          <textarea id="cfgCuriosidadeEcho" class="sim-input sim-textarea" rows="2">Valeu por chamar! Fica de olho no perfil que sempre tem novidade por aqui 👀</textarea>
+
+          <label class="sim-field-label">Spam / ofensivo</label>
+          <div class="sim-input sim-locked">Nenhuma DM é enviada — comentário ignorado ou removido pelo Triage</div>
+        </div>
+
+        <div class="sim-tabs" id="simTabsEcho">
+          <button class="sim-tab active" data-group="echo" data-sim="lead">
+            <span class="sim-tab-emoji">🔥</span>
+            <span class="sim-tab-label">Lead quente</span>
+            <span class="sim-tab-count">130 comentários</span>
+          </button>
+          <button class="sim-tab" data-group="echo" data-sim="duvida">
+            <span class="sim-tab-emoji">🤔</span>
+            <span class="sim-tab-label">Dúvida</span>
+            <span class="sim-tab-count">90 comentários</span>
+          </button>
+          <button class="sim-tab" data-group="echo" data-sim="curiosidade">
+            <span class="sim-tab-emoji">😐</span>
+            <span class="sim-tab-label">Curiosidade fria</span>
+            <span class="sim-tab-count">60 comentários</span>
+          </button>
+          <button class="sim-tab" data-group="echo" data-sim="spam">
+            <span class="sim-tab-emoji">🤖</span>
+            <span class="sim-tab-label">Spam / ofensivo</span>
+            <span class="sim-tab-count">20 comentários</span>
+          </button>
+        </div>
+
+        <div class="sim-window">
+          <div class="sim-source" id="simPostRefEcho">comentário no post · Box 24×7</div>
+          <div id="simCommentPreviewEcho" class="bubble bubble-comment" style="margin-bottom:0;"></div>
+          <div id="simContentEcho" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="pulse">← Pulse</button>
+        <button class="page-nav-btn primary" data-goto="argus">Ver Argus →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-argus">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">05 · by SentinelaIA</div>
+        <h1 class="page-title">Argus</h1>
+        <p class="lede">Vigia o Google atrás de quem tá comprando o nome da sua marca — e ajuda a tirar do ar.</p>
+      </div>
+
+      <div class="impact-banner">
+        <div class="impact-num">-30%</div>
+        <div class="impact-text">
+          <div class="it-title">de redução real no CPC</div>
+          <div class="it-sub">nos primeiros 4 meses monitorando — menos concorrente pagando pelo nome da marca, mais barato o clique de quem devia estar pagando.</div>
+        </div>
+      </div>
+
+      <div class="stats-row" style="margin-top: 28px;">
+        <div class="stat-card">
+          <div class="num">12</div>
+          <div class="label">marcas monitoradas</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="num">112</div>
+          <div class="label">anunciantes comprando o termo da marca</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="num">45</div>
+          <div class="label">usando o termo direto no texto do anúncio</div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 780px;">
+        <div class="section-title">O que acontece depois de detectar</div>
+        <div class="section-sub">Argus não para no alerta — ele leva até a ação.</div>
+
+        <div class="flow-diagram">
+          <div class="flow-node">
+            <div class="flow-node-icon">🔍</div>
+            <div class="flow-node-title">Anúncio detectado</div>
+            <div class="flow-node-sub">Argus varre o Google Ads Transparency Center todo dia atrás do termo da marca.</div>
+          </div>
+          <div class="flow-connector">→</div>
+          <div class="flow-node">
+            <div class="flow-node-icon">🧐</div>
+            <div class="flow-node-title">Auditoria humana</div>
+            <div class="flow-node-sub">Alguém confirma se é marca oficial, parceiro de arbitragem ou anunciante suspeito.</div>
+          </div>
+          <div class="flow-connector">→</div>
+          <div class="flow-node">
+            <div class="flow-node-icon">🤝</div>
+            <div class="flow-node-title">Contato para negociação</div>
+            <div class="flow-node-sub">Time entra em contato por e-mail e LinkedIn pedindo a remoção do termo.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 780px;">
+        <div class="section-title">Detecção em 2 camadas</div>
+        <div class="section-sub">Não é só o histórico — é o histórico mais o que aparece de verdade agora, geolocalizado.</div>
+
+        <div class="layer-grid">
+          <div class="layer-card">
+            <div class="layer-icon">🗂️</div>
+            <div class="layer-title">Histórico — Ads Transparency Center</div>
+            <div class="layer-desc">Audita o registro público de anúncios por anunciante e domínio. Pega quem já comprou o termo, mesmo que não esteja no ar nesse instante.</div>
+          </div>
+          <div class="layer-card">
+            <div class="layer-icon">📍</div>
+            <div class="layer-title">Tempo real — busca geolocalizada</div>
+            <div class="layer-desc">Simula uma pesquisa de verdade a partir da cidade do cliente, e mostra exatamente quais anúncios aparecem pra quem tá pesquisando agora.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 780px;">
+        <div class="demo-tag">Simulação ilustrativa — anunciante genérico, sem expor dado real</div>
+        <div class="section-title">Como aparece no Google</div>
+        <div class="section-sub">Dois padrões de invasão de termo: um mais discreto, outro que usa a marca direto no anúncio.</div>
+
+        <div class="argus-example-card">
+          <div class="argus-example-head">
+            <span class="argus-example-brand">Termo monitorado: "box 24×7 aluguel"</span>
+            <span class="argus-badge danger">Verificar</span>
+          </div>
+          <div class="gad-mock">
+            <span class="gad-ad-label">Anúncio</span>
+            <div class="gad-url">www.concorrente.com/aluguel-eletronicos</div>
+            <div class="gad-headline">Aluguel de Eletrônicos com Entrega Rápida</div>
+            <div class="gad-desc">Alugue PS5, extratora e mais. Sem burocracia, reserva em minutos.</div>
+          </div>
+          <div class="argus-example-caption">comprou o termo de busca, mas não usa a marca no texto do anúncio</div>
+        </div>
+
+        <div class="argus-example-card">
+          <div class="argus-example-head">
+            <span class="argus-example-brand">Termo monitorado: "grupo primo"</span>
+            <span class="argus-badge danger">Verificar</span>
+          </div>
+          <div class="gad-mock">
+            <span class="gad-ad-label">Anúncio</span>
+            <div class="gad-url">www.concorrente.com/alternativa-grupo-primo</div>
+            <div class="gad-headline">Alternativa ao Grupo Primo — Compare e Economize</div>
+            <div class="gad-desc">Antes de fechar com Grupo Primo, veja nossa oferta. Preços até 20% menores.</div>
+          </div>
+          <div class="argus-example-caption">usa o nome da marca direto no texto do anúncio — o caso mais agressivo</div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="echo">← Echo</button>
+        <button class="page-nav-btn primary" data-goto="radar">Ver Radar →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-radar">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">06 · by SentinelaIA</div>
+        <h1 class="page-title">Radar</h1>
+        <p class="lede">Testa a tag e o pixel do site todo dia — pra sua verba de tráfego pago não voar no escuro.</p>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns: minmax(150px, 220px);">
+        <div class="stat-card ok">
+          <div class="num">15</div>
+          <div class="label">sites monitorados</div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 780px;">
+        <div class="section-title">Como funciona</div>
+        <div class="section-sub">Dois níveis de teste, porque nem todo teste é de graça pro cliente.</div>
+
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div class="flow-step-text"><strong>Monitoramento diário:</strong> Radar abre o site todo dia e confere se a tag/pixel de cada plataforma ativa ainda dispara — leve, sem gerar pedido ou lead de verdade.<span class="flow-step-tag">roda sempre</span></div>
+          </div>
+          <div class="flow-step fallback">
+            <div class="flow-step-num">2</div>
+            <div class="flow-step-text"><strong>Teste completo (compra/lead):</strong> simular uma compra ou lead de verdade pode gerar pedido real ou poluir o CRM do cliente — por isso é negociado caso a caso. Quando liberado, roda 1x por semana.<span class="flow-step-tag">sob negociação</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 780px;">
+        <div class="section-title">Alerta na hora que algo quebra</div>
+        <div class="section-sub">Disparo diário ou semanal, direto pro Telegram e e-mail.</div>
+
+        <div class="channel-grid" style="margin-bottom: 20px;">
+          <div class="channel-card easy">
+            <div class="channel-icon">📧</div>
+            <div class="channel-title">E-mail</div>
+            <div class="channel-desc">Resumo diário ou semanal, direto na caixa de entrada. Grátis, simples, sem aprovação de ninguém.</div>
+            <span class="channel-badge easy">Fácil de configurar</span>
+          </div>
+          <div class="channel-card easy">
+            <div class="channel-icon">📨</div>
+            <div class="channel-title">Telegram</div>
+            <div class="channel-desc">Alerta instantâneo via bot. Grátis, sem burocracia — o mais rápido dos dois pra saber que algo quebrou.</div>
+            <span class="channel-badge easy">Fácil de configurar</span>
+          </div>
+        </div>
+
+        <div class="alert-mockup">
+          <div class="am-icon">🚨</div>
+          <div>
+            <div class="am-title">Radar · Box 24×7</div>
+            <div class="am-body">Pixel do Meta parou de disparar no evento de Purchase — checkout do site. Verificado às 09:14, ainda fora do ar.</div>
+            <div class="am-time">hoje · 09:14 · via Telegram</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="argus">← Argus</button>
+        <button class="page-nav-btn primary" data-goto="forge">Ver Forge →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-forge">
+      <span class="back-link" data-goto="cover">← voltar ao hub</span>
+
+      <div class="product-header">
+        <div class="eyebrow">07 · by SentinelaIA</div>
+        <h1 class="page-title">Forge</h1>
+        <p class="lede">Criação de motion e vídeo realista com IA — do briefing ao vídeo pronto, mais rápido e dinâmico.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card ok">
+          <div class="num">+15%</div>
+          <div class="label">CTR nos clientes que usaram</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">-38%</div>
+          <div class="label">CPL nos clientes que usaram</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="num">+5%</div>
+          <div class="label">ROAS nos clientes que usaram</div>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 720px;">
+        <div class="section-title">Como funciona</div>
+        <div class="section-sub">Simples pro cliente — o trabalho pesado é todo do Forge.</div>
+
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div class="flow-step-text"><strong>Formulário:</strong> o cliente descreve o que quer e a duração do vídeo — sem precisar saber nada de produção ou IA.</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-step-num">2</div>
+            <div class="flow-step-text"><strong>Criação:</strong> o Forge gera o vídeo — motion de imagem existente ou criação do zero, com personagem realista, animado, ou qualquer estilo pedido.</div>
+          </div>
+          <div class="flow-step fallback">
+            <div class="flow-step-num">3</div>
+            <div class="flow-step-text"><strong>Entrega:</strong> vídeo pronto em até 3 dias úteis.<span class="flow-step-tag">até 3 dias úteis</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="chip-caption">Estilos que o Forge entrega</div>
+        <div class="chip-group">
+          <span class="chip understood">Personagem realista</span>
+          <span class="chip understood">Personagem animado</span>
+          <span class="chip understood">Motion de imagem existente</span>
+          <span class="chip understood">Criação do zero</span>
+          <span class="chip understood">Qualquer estilo pedido</span>
+        </div>
+      </div>
+
+      <div class="section-block" style="max-width: 960px;">
+        <div class="section-title">Portfólio</div>
+        <div class="section-sub">Exemplos reais gerados pelo Forge. Clique em play — todos silenciados por padrão.</div>
+
+        <div class="portfolio-grid">
+          <div class="video-card">
+            <span class="vc-label">01</span>
+            <video src="videos/forge-01.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">02</span>
+            <video src="videos/forge-02.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">03</span>
+            <video src="videos/forge-03.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">04</span>
+            <video src="videos/forge-04.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">05</span>
+            <video src="videos/forge-05.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">06</span>
+            <video src="videos/forge-06.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">07</span>
+            <video src="videos/forge-07.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">08</span>
+            <video src="videos/forge-08.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">09</span>
+            <video src="videos/forge-09.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">10</span>
+            <video src="videos/forge-10.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">11</span>
+            <video src="videos/forge-11.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">12</span>
+            <video src="videos/forge-12.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">13</span>
+            <video src="videos/forge-13.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">14</span>
+            <video src="videos/forge-14.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+          <div class="video-card">
+            <span class="vc-label">15</span>
+            <video src="videos/forge-15.mp4" muted loop playsinline controls preload="metadata"></video>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="page-nav-btn" data-goto="radar">← Radar</button>
+        <button class="page-nav-btn primary" data-goto="cover">Voltar ao hub →</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // ---------- navigation ----------
+  function goTo(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navItem = document.querySelector('.nav-item[data-goto="' + id + '"]');
+    if (navItem) navItem.classList.add('active');
+    document.querySelector('.main').scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', () => goTo(el.getAttribute('data-goto')));
+  });
+
+  // ---------- terminal signature animation ----------
+  const lines = [
+    ['04:12:03', 'triage', 'ok', '312 comentários classificados · 0 pendentes'],
+    ['04:12:47', 'pulse', 'ok', 'live monitorada · instagram · 0 removidos'],
+    ['04:13:10', 'argus', 'ok', '2 domínios verificados · 1 anunciante suspeito'],
+    ['04:13:58', 'radar', 'ok', 'tags conferidas · nenhuma alteração'],
+    ['04:14:22', 'echo', 'ok', '18 dms enviadas automaticamente'],
+  ];
+
+  const body = document.getElementById('terminalBody');
+  let i = 0;
+
+  function renderLine(index) {
+    const [time, tag, status, msg] = lines[index];
+    const div = document.createElement('div');
+    div.className = 'terminal-line';
+    div.innerHTML = '<span class="t">' + time + '</span><span class="tag">' + tag + '</span> <span class="ok">✓</span> ' + msg;
+    return div;
+  }
+
+  function typeLoop() {
+    if (i >= lines.length) {
+      // remove cursor holder, restart subtly after pause
+      setTimeout(() => {
+        body.innerHTML = '';
+        i = 0;
+        typeLoop();
+      }, 3200);
+      return;
+    }
+    body.appendChild(renderLine(i));
+    i++;
+    setTimeout(typeLoop, 650);
+  }
+
+  typeLoop();
+
+  // ---------- Triage: simulador de respostas (via abas, exemplos prontos) ----------
+  const simPresets = {
+    lead: 'quero alugar o PS5 pro fim de semana, ainda tem disponível?',
+    duvida: 'gente como funciona o aluguel do secador, é por quanto tempo?',
+    elogio: 'virou minha rotina, uso a extratora toda semana, perfeita',
+    fun: 'meu Deus isso salvou minha vida',
+    ofensivo: '[comentário removido — continha discurso de ódio]'
+  };
+
+  const replyTemplates = {
+    lead: () => (document.getElementById('cfgLead')?.value.trim()) || 'configure a resposta de lead acima ↑',
+    duvida: () => (document.getElementById('cfgDuvida')?.value.trim()) || 'configure a resposta de dúvida acima ↑',
+    elogio: () => (document.getElementById('cfgElogio')?.value.trim()) || 'configure a resposta de elogio acima ↑',
+    fun: () => (document.getElementById('cfgFun')?.value.trim()) || 'configure a resposta de elogio (bom humor) acima ↑',
+    ofensivo: () => 'Comentário identificado como ofensivo e removido antes de qualquer cliente ver. Nenhuma resposta é enviada nesse caso.'
+  };
+
+  const tagLabels = {
+    lead: 'lead detectado',
+    duvida: 'dúvida',
+    elogio: 'elogio',
+    fun: 'elogio · bom humor',
+    ofensivo: 'removido automaticamente'
+  };
+
+  function runSim(cat) {
+    const commentEl = document.getElementById('simCommentPreview');
+    const el = document.getElementById('simContent');
+    if (!commentEl || !el) return;
+
+    const removed = cat === 'ofensivo';
+    commentEl.textContent = '"' + simPresets[cat] + '"';
+
+    el.innerHTML = `
+      <div class="bubble bubble-reply ${removed ? 'removed-bubble' : ''}">
+        <span class="bubble-tag">${tagLabels[cat]}</span>
+        ${replyTemplates[cat]()}
+      </div>
+    `;
+  }
+
+  let activeCat = 'lead';
+
+  document.querySelectorAll('.sim-tab[data-group="triage"]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sim-tab[data-group="triage"]').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeCat = tab.getAttribute('data-sim');
+      runSim(activeCat);
+    });
+  });
+
+  ['cfgLead', 'cfgDuvida', 'cfgElogio', 'cfgFun'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.addEventListener('input', () => runSim(activeCat));
+  });
+
+  runSim(activeCat);
+
+  // ---------- Triage: painel de volume (pizza + barras) ----------
+  const volumeData = [
+    { key: 'elogio', name: 'Elogio', count: 210, color: '#34d399' },
+    { key: 'duvida', name: 'Dúvida', count: 150, color: '#60a5fa' },
+    { key: 'lead', name: 'Lead', count: 90, color: '#fbbf24' },
+    { key: 'ofensivo', name: 'Removido (ofensivo)', count: 68, color: '#f87171' }
+  ];
+
+  const volBarsEl = document.getElementById('volumeBars');
+  if (volBarsEl) {
+    const max = Math.max(...volumeData.map(d => d.count));
+    volBarsEl.innerHTML = volumeData.map(d => `
+      <div class="vbar-row">
+        <div class="vbar-top">
+          <span class="vbar-name">${d.name}</span>
+          <span class="vbar-count">${d.count}</span>
+        </div>
+        <div class="vbar-track">
+          <div class="vbar-fill" style="width:${(d.count / max * 100).toFixed(0)}%; background:${d.color};"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const volCanvas = document.getElementById('volumeChart');
+  if (volCanvas && window.Chart) {
+    new Chart(volCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: volumeData.map(d => d.name),
+        datasets: [{
+          data: volumeData.map(d => d.count),
+          backgroundColor: volumeData.map(d => d.color),
+          borderColor: '#0a0c10',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            bodyFont: { family: 'JetBrains Mono' },
+            titleFont: { family: 'JetBrains Mono' }
+          }
+        }
+      }
+    });
+  }
+
+  // ---------- Triage: comentários por post ----------
+  const postData = [
+    { title: 'PS5 liberado pro fim de semana 🎮', type: 'ads', icon: '📢', comments: 312, removed: 18 },
+    { title: 'Como funciona o aluguel da extratora', type: 'organic', icon: '🖼️', comments: 240, removed: 9 },
+    { title: 'Secador de cabelo — promoção só essa semana', type: 'ads', icon: '📢', comments: 288, removed: 26 },
+    { title: 'Bastidores da loja', type: 'organic', icon: '🖼️', comments: 160, removed: 15 }
+  ];
+
+  const postListEl = document.getElementById('postList');
+  if (postListEl) {
+    postListEl.innerHTML = postData.map(p => `
+      <div class="post-row">
+        <div class="post-icon">${p.icon}</div>
+        <div class="post-info">
+          <div class="post-title">${p.title}</div>
+          <div class="post-meta">
+            <span class="post-type ${p.type === 'ads' ? 'ads' : 'organic'}">${p.type === 'ads' ? 'Anúncio' : 'Orgânico'}</span>
+          </div>
+        </div>
+        <div class="post-stats">
+          <div class="post-stat">
+            <div class="n">${p.comments}</div>
+            <div class="l">comentários</div>
+          </div>
+          <div class="post-stat removed">
+            <div class="n">${p.removed}</div>
+            <div class="l">removidos</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // liga cada exemplo do simulador ao post de origem
+  const postRefMap = {
+    lead: 'PS5 liberado pro fim de semana 🎮',
+    duvida: 'Secador de cabelo — promoção só essa semana',
+    elogio: 'Como funciona o aluguel da extratora',
+    fun: 'Bastidores da loja',
+    ofensivo: 'PS5 liberado pro fim de semana 🎮'
+  };
+
+  const _originalRunSim = runSim;
+  runSim = function(cat) {
+    _originalRunSim(cat);
+    const refEl = document.getElementById('simPostRef');
+    if (refEl && postRefMap[cat]) refEl.textContent = 'comentário no post · "' + postRefMap[cat] + '"';
+  };
+  runSim(activeCat);
+
+  // =====================================================
+  // LOOP (página 02) — mesmo padrão do Triage, dados próprios
+  // =====================================================
+
+  // painel de volume
+  const loopVolumeData = [
+    { name: 'Elogio', count: 260, color: '#34d399' },
+    { name: 'Dúvida', count: 175, color: '#60a5fa' },
+    { name: 'Lead', count: 85, color: '#fbbf24' },
+    { name: 'Spam / bot', count: 61, color: '#a78bfa' },
+    { name: 'Removido (ofensivo)', count: 34, color: '#f87171' }
+  ];
+
+  const loopVolBarsEl = document.getElementById('volumeBarsLoop');
+  if (loopVolBarsEl) {
+    const loopMax = Math.max(...loopVolumeData.map(d => d.count));
+    loopVolBarsEl.innerHTML = loopVolumeData.map(d => `
+      <div class="vbar-row">
+        <div class="vbar-top">
+          <span class="vbar-name">${d.name}</span>
+          <span class="vbar-count">${d.count}</span>
+        </div>
+        <div class="vbar-track">
+          <div class="vbar-fill" style="width:${(d.count / loopMax * 100).toFixed(0)}%; background:${d.color};"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const loopVolCanvas = document.getElementById('volumeChartLoop');
+  if (loopVolCanvas && window.Chart) {
+    new Chart(loopVolCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: loopVolumeData.map(d => d.name),
+        datasets: [{
+          data: loopVolumeData.map(d => d.count),
+          backgroundColor: loopVolumeData.map(d => d.color),
+          borderColor: '#0a0c10',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { bodyFont: { family: 'JetBrains Mono' }, titleFont: { family: 'JetBrains Mono' } }
+        }
+      }
+    });
+  }
+
+  // comentários por vídeo
+  const videoData = [
+    { title: 'Tutorial: alugando a extratora passo a passo', type: 'organic', icon: '🎬', comments: 320, removed: 22 },
+    { title: 'Testamos o PS5 alugado por 48h — vale a pena?', type: 'organic', icon: '🎬', comments: 260, removed: 19 },
+    { title: 'Anúncio em vídeo: secador de cabelo 30% off', type: 'ads', icon: '📢', comments: 240, removed: 43 },
+    { title: 'Bastidores: montando as máquinas da Box 24×7', type: 'organic', icon: '🎬', comments: 180, removed: 11 }
+  ];
+
+  const videoListEl = document.getElementById('videoList');
+  if (videoListEl) {
+    videoListEl.innerHTML = videoData.map(p => `
+      <div class="post-row">
+        <div class="post-icon">${p.icon}</div>
+        <div class="post-info">
+          <div class="post-title">${p.title}</div>
+          <div class="post-meta">
+            <span class="post-type ${p.type === 'ads' ? 'ads' : 'organic'}">${p.type === 'ads' ? 'Anúncio' : 'Vídeo'}</span>
+          </div>
+        </div>
+        <div class="post-stats">
+          <div class="post-stat">
+            <div class="n">${p.comments}</div>
+            <div class="l">comentários</div>
+          </div>
+          <div class="post-stat removed">
+            <div class="n">${p.removed}</div>
+            <div class="l">removidos</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // simulador
+  const loopPresets = {
+    lead: 'queria alugar a extratora que aparece no vídeo, onde reservo?',
+    duvida: 'aos 2:14 vocês erraram o preço, é isso mesmo?',
+    elogio: 'adorei o vídeo de vocês mostrando como funciona, muito claro',
+    fun: 'cara vocês salvaram meu fim de semana com esse vídeo, sem PS5 eu ia surtar',
+    spam: '🔥GANHE R$5000 HOJE CLICANDO NO LINK DA BIO🔥 t.me/promo-falsa',
+    ofensivo: '[comentário removido — discurso ofensivo/racista]'
+  };
+
+  const loopReplies = {
+    lead: () => (document.getElementById('cfgLeadLoop')?.value.trim()) || 'configure a resposta de lead acima ↑',
+    duvida: () => (document.getElementById('cfgDuvidaLoop')?.value.trim()) || 'configure a resposta de dúvida acima ↑',
+    elogio: () => (document.getElementById('cfgElogioLoop')?.value.trim()) || 'configure a resposta de elogio acima ↑',
+    fun: () => (document.getElementById('cfgFunLoop')?.value.trim()) || 'configure a resposta de elogio (bom humor) acima ↑',
+    spam: () => 'Comentário identificado como spam/bot e removido automaticamente. Nenhuma resposta é enviada nesse caso.',
+    ofensivo: () => 'Comentário identificado como ofensivo e removido antes de qualquer cliente ver. Nenhuma resposta é enviada nesse caso.'
+  };
+
+  const loopTagLabels = {
+    lead: 'lead detectado',
+    duvida: 'dúvida',
+    elogio: 'elogio',
+    fun: 'elogio · bom humor',
+    spam: 'spam/bot detectado',
+    ofensivo: 'removido automaticamente'
+  };
+
+  const loopPostRefMap = {
+    lead: 'Testamos o PS5 alugado por 48h — vale a pena?',
+    duvida: 'Testamos o PS5 alugado por 48h — vale a pena?',
+    elogio: 'Tutorial: alugando a extratora passo a passo',
+    fun: 'Bastidores: montando as máquinas da Box 24×7',
+    spam: 'Anúncio em vídeo: secador de cabelo 30% off',
+    ofensivo: 'Anúncio em vídeo: secador de cabelo 30% off'
+  };
+
+  let loopActiveCat = 'lead';
+
+  function runLoopSim(cat) {
+    const commentEl = document.getElementById('simCommentPreviewLoop');
+    const contentEl = document.getElementById('simContentLoop');
+    const refEl = document.getElementById('simPostRefLoop');
+    if (!commentEl || !contentEl) return;
+
+    const removed = cat === 'spam' || cat === 'ofensivo';
+    commentEl.textContent = '"' + loopPresets[cat] + '"';
+
+    contentEl.innerHTML = `
+      <div class="bubble bubble-reply ${removed ? 'removed-bubble' : ''}">
+        <span class="bubble-tag">${loopTagLabels[cat]}</span>
+        ${loopReplies[cat]()}
+      </div>
+    `;
+
+    if (refEl && loopPostRefMap[cat]) {
+      refEl.textContent = 'comentário no vídeo · "' + loopPostRefMap[cat] + '"';
+    }
+  }
+
+  document.querySelectorAll('.sim-tab[data-group="loop"]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sim-tab[data-group="loop"]').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      loopActiveCat = tab.getAttribute('data-sim');
+      runLoopSim(loopActiveCat);
+    });
+  });
+
+  ['cfgLeadLoop', 'cfgDuvidaLoop', 'cfgElogioLoop', 'cfgFunLoop'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.addEventListener('input', () => runLoopSim(loopActiveCat));
+  });
+
+  runLoopSim(loopActiveCat);
+
+  // =====================================================
+  // PULSE (página 03) — painel de live + mesmo padrão
+  // =====================================================
+
+  // contador de espectadores subindo devagar
+  const liveViewersEl = document.getElementById('liveViewers');
+  if (liveViewersEl) {
+    let viewers = 1284;
+    setInterval(() => {
+      viewers += Math.floor(Math.random() * 5) - 1;
+      if (viewers < 1200) viewers = 1200;
+      liveViewersEl.textContent = '👁 ' + viewers.toLocaleString('pt-BR');
+    }, 2200);
+  }
+
+  // chat da live rodando ao vivo
+  const liveScript = [
+    { plat: '📸', text: 'alguém sabe até que horas vai a live?', action: 'reply', reply: 'Vai até às 22h! Fica com a gente 😄' },
+    { plat: '🟣', text: '🔥GANHA SEGUIDOR GRÁTIS NO LINK🔥 bit.ly/xxx', action: 'removed' },
+    { plat: '▶️', text: 'surtei com esse preço, quero alugar AGORA', action: 'reply', reply: 'Baixa o app da Box 24×7 e garante antes que acabe 🎮' },
+    { plat: '📸', text: 'kkkkkk essa live tá boa demais', action: 'reply', reply: 'Obrigado! 🙌' },
+    { plat: '▶️', text: '[mensagem removida — discurso ofensivo]', action: 'removed' },
+    { plat: '🟣', text: 'cupom ainda vale depois da live?', action: 'reply', reply: 'Vale sim, até meia-noite hoje 🎁' },
+    { plat: '📸', text: 'CLIQUE AQUI CLIQUE AQUI CLIQUE AQUI', action: 'removed' },
+    { plat: '▶️', text: 'vocês entregam pra fora de SP?', action: 'reply', reply: 'Por enquanto só região metropolitana, mas tá expandindo!' }
+  ];
+
+  const liveFeedEl = document.getElementById('liveChatFeed');
+  let liveIdx = 0;
+
+  function pushLiveMsg() {
+    if (!liveFeedEl) return;
+    const item = liveScript[liveIdx % liveScript.length];
+    liveIdx++;
+
+    const div = document.createElement('div');
+    div.className = 'chat-msg' + (item.action === 'removed' ? ' removed' : '');
+    div.innerHTML = '<span class="chat-plat">' + item.plat + '</span>' + item.text +
+      (item.action === 'reply' ? '<span class="chat-reply">→ ' + item.reply + '</span>' : '');
+
+    liveFeedEl.appendChild(div);
+    while (liveFeedEl.children.length > 5) {
+      liveFeedEl.removeChild(liveFeedEl.firstChild);
+    }
+  }
+
+  if (liveFeedEl) {
+    pushLiveMsg();
+    setInterval(pushLiveMsg, 2400);
+  }
+
+  // painel de volume
+  const pulseVolumeData = [
+    { name: 'Lead', count: 180, color: '#fbbf24' },
+    { name: 'Dúvida', count: 95, color: '#60a5fa' },
+    { name: 'Elogio', count: 65, color: '#34d399' },
+    { name: 'Spam / flood', count: 58, color: '#a78bfa' },
+    { name: 'Removido (ofensivo)', count: 31, color: '#f87171' }
+  ];
+
+  const pulseVolBarsEl = document.getElementById('volumeBarsPulse');
+  if (pulseVolBarsEl) {
+    const pulseMax = Math.max(...pulseVolumeData.map(d => d.count));
+    pulseVolBarsEl.innerHTML = pulseVolumeData.map(d => `
+      <div class="vbar-row">
+        <div class="vbar-top">
+          <span class="vbar-name">${d.name}</span>
+          <span class="vbar-count">${d.count}</span>
+        </div>
+        <div class="vbar-track">
+          <div class="vbar-fill" style="width:${(d.count / pulseMax * 100).toFixed(0)}%; background:${d.color};"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const pulseVolCanvas = document.getElementById('volumeChartPulse');
+  if (pulseVolCanvas && window.Chart) {
+    new Chart(pulseVolCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: pulseVolumeData.map(d => d.name),
+        datasets: [{
+          data: pulseVolumeData.map(d => d.count),
+          backgroundColor: pulseVolumeData.map(d => d.color),
+          borderColor: '#0a0c10',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { bodyFont: { family: 'JetBrains Mono' }, titleFont: { family: 'JetBrains Mono' } }
+        }
+      }
+    });
+  }
+
+  // mensagens por plataforma
+  const platformData = [
+    { title: 'Instagram Live', type: 'organic', icon: '📸', comments: 480, removed: 28 },
+    { title: 'YouTube Live', type: 'organic', icon: '▶️', comments: 410, removed: 24 },
+    { title: 'Twitch', type: 'organic', icon: '🟣', comments: 350, removed: 37 }
+  ];
+
+  const platformListEl = document.getElementById('platformList');
+  if (platformListEl) {
+    platformListEl.innerHTML = platformData.map(p => `
+      <div class="post-row">
+        <div class="post-icon">${p.icon}</div>
+        <div class="post-info">
+          <div class="post-title">${p.title}</div>
+          <div class="post-meta">
+            <span class="post-type organic">Live</span>
+          </div>
+        </div>
+        <div class="post-stats">
+          <div class="post-stat">
+            <div class="n">${p.comments}</div>
+            <div class="l">mensagens</div>
+          </div>
+          <div class="post-stat removed">
+            <div class="n">${p.removed}</div>
+            <div class="l">removidas</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // simulador
+  const pulsePresets = {
+    lead: 'consegue reservar pra mim agora enquanto assisto a live?',
+    duvida: 'até que horas vai a live hoje?',
+    elogio: 'melhor live de vocês até agora, adorei',
+    spam: '🔥GANHA SEGUIDOR GRÁTIS NO LINK🔥 bit.ly/xxx',
+    ofensivo: '[mensagem removida — discurso ofensivo/racista]'
+  };
+
+  const pulseReplies = {
+    lead: () => (document.getElementById('cfgLeadPulse')?.value.trim()) || 'configure a resposta de lead acima ↑',
+    duvida: () => (document.getElementById('cfgDuvidaPulse')?.value.trim()) || 'configure a resposta de dúvida acima ↑',
+    elogio: () => (document.getElementById('cfgElogioPulse')?.value.trim()) || 'configure a resposta de elogio acima ↑',
+    spam: () => 'Mensagem identificada como spam/flood e removida automaticamente. Nenhuma resposta é enviada nesse caso.',
+    ofensivo: () => 'Mensagem identificada como ofensiva e removida antes de outros espectadores verem. Nenhuma resposta é enviada nesse caso.'
+  };
+
+  const pulseTagLabels = {
+    lead: 'lead detectado',
+    duvida: 'dúvida',
+    elogio: 'elogio',
+    spam: 'spam/flood detectado',
+    ofensivo: 'removido automaticamente'
+  };
+
+  const pulsePlatformMap = {
+    lead: 'Instagram Live',
+    duvida: 'YouTube Live',
+    elogio: 'Twitch',
+    spam: 'Twitch',
+    ofensivo: 'YouTube Live'
+  };
+
+  let pulseActiveCat = 'lead';
+
+  function runPulseSim(cat) {
+    const commentEl = document.getElementById('simCommentPreviewPulse');
+    const contentEl = document.getElementById('simContentPulse');
+    const refEl = document.getElementById('simPostRefPulse');
+    if (!commentEl || !contentEl) return;
+
+    const removed = cat === 'spam' || cat === 'ofensivo';
+    commentEl.textContent = '"' + pulsePresets[cat] + '"';
+
+    contentEl.innerHTML = `
+      <div class="bubble bubble-reply ${removed ? 'removed-bubble' : ''}">
+        <span class="bubble-tag">${pulseTagLabels[cat]}</span>
+        ${pulseReplies[cat]()}
+      </div>
+    `;
+
+    if (refEl && pulsePlatformMap[cat]) {
+      refEl.textContent = 'mensagem no chat · ' + pulsePlatformMap[cat] + ' · Box 24×7';
+    }
+  }
+
+  document.querySelectorAll('.sim-tab[data-group="pulse"]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sim-tab[data-group="pulse"]').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      pulseActiveCat = tab.getAttribute('data-sim');
+      runPulseSim(pulseActiveCat);
+    });
+  });
+
+  ['cfgLeadPulse', 'cfgDuvidaPulse', 'cfgElogioPulse'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.addEventListener('input', () => runPulseSim(pulseActiveCat));
+  });
+
+  runPulseSim(pulseActiveCat);
+
+  // =====================================================
+  // ECHO (página 04) — fluxo comentário -> DM + mesmo padrão
+  // =====================================================
+
+  // animação do mockup de DM (loop)
+  const echoDmScript = [
+    { side: 'in', text: '"quero alugar o PS5 pro fim de semana, ainda tem disponível?"' },
+    { side: 'out', text: 'Boa! Pra fechar é só me passar seu CEP que eu já confirmo 🎮' },
+    { side: 'in', text: 'é em Santo André' },
+    { side: 'out', text: 'Perfeito, temos entrega aí! Te mando o link pra fechar 👇' }
+  ];
+
+  const echoDmBodyEl = document.getElementById('echoDmBody');
+  let echoDmIdx = 0;
+  let echoDmTimer = null;
+
+  function echoDmStep() {
+    if (!echoDmBodyEl) return;
+
+    if (echoDmIdx >= echoDmScript.length) {
+      setTimeout(() => {
+        echoDmBodyEl.innerHTML = '';
+        echoDmIdx = 0;
+        echoDmStep();
+      }, 2600);
+      return;
+    }
+
+    const msg = echoDmScript[echoDmIdx];
+
+    if (msg.side === 'out') {
+      const typing = document.createElement('div');
+      typing.className = 'dm-typing';
+      typing.innerHTML = '<span></span><span></span><span></span>';
+      echoDmBodyEl.appendChild(typing);
+      while (echoDmBodyEl.children.length > 4) echoDmBodyEl.removeChild(echoDmBodyEl.firstChild);
+
+      setTimeout(() => {
+        typing.remove();
+        const bubble = document.createElement('div');
+        bubble.className = 'dm-bubble out';
+        bubble.textContent = msg.text;
+        echoDmBodyEl.appendChild(bubble);
+        while (echoDmBodyEl.children.length > 4) echoDmBodyEl.removeChild(echoDmBodyEl.firstChild);
+        echoDmIdx++;
+        echoDmTimer = setTimeout(echoDmStep, 1000);
+      }, 900);
+    } else {
+      const bubble = document.createElement('div');
+      bubble.className = 'dm-bubble in';
+      bubble.textContent = msg.text;
+      echoDmBodyEl.appendChild(bubble);
+      while (echoDmBodyEl.children.length > 4) echoDmBodyEl.removeChild(echoDmBodyEl.firstChild);
+      echoDmIdx++;
+      echoDmTimer = setTimeout(echoDmStep, 1100);
+    }
+  }
+
+  if (echoDmBodyEl) echoDmStep();
+
+  // painel de volume
+  const echoVolumeData = [
+    { name: 'Lead quente', count: 130, color: '#fbbf24' },
+    { name: 'Dúvida', count: 90, color: '#60a5fa' },
+    { name: 'Curiosidade fria', count: 60, color: '#34d399' },
+    { name: 'Spam ignorado', count: 20, color: '#f87171' }
+  ];
+
+  const echoVolBarsEl = document.getElementById('volumeBarsEcho');
+  if (echoVolBarsEl) {
+    const echoMax = Math.max(...echoVolumeData.map(d => d.count));
+    echoVolBarsEl.innerHTML = echoVolumeData.map(d => `
+      <div class="vbar-row">
+        <div class="vbar-top">
+          <span class="vbar-name">${d.name}</span>
+          <span class="vbar-count">${d.count}</span>
+        </div>
+        <div class="vbar-track">
+          <div class="vbar-fill" style="width:${(d.count / echoMax * 100).toFixed(0)}%; background:${d.color};"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const echoVolCanvas = document.getElementById('volumeChartEcho');
+  if (echoVolCanvas && window.Chart) {
+    new Chart(echoVolCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: echoVolumeData.map(d => d.name),
+        datasets: [{
+          data: echoVolumeData.map(d => d.count),
+          backgroundColor: echoVolumeData.map(d => d.color),
+          borderColor: '#0a0c10',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { bodyFont: { family: 'JetBrains Mono' }, titleFont: { family: 'JetBrains Mono' } }
+        }
+      }
+    });
+  }
+
+  // conversas por post
+  const echoPostData = [
+    { title: 'PS5 liberado pro fim de semana 🎮', type: 'ads', icon: '📢', comments: 95, removed: 20 },
+    { title: 'Como funciona o aluguel da extratora', type: 'organic', icon: '🖼️', comments: 80, removed: 14 },
+    { title: 'Secador de cabelo — promoção só essa semana', type: 'ads', icon: '📢', comments: 75, removed: 12 },
+    { title: 'Bastidores da loja', type: 'organic', icon: '🖼️', comments: 50, removed: 4 }
+  ];
+
+  const echoPostListEl = document.getElementById('echoPostList');
+  if (echoPostListEl) {
+    echoPostListEl.innerHTML = echoPostData.map(p => `
+      <div class="post-row">
+        <div class="post-icon">${p.icon}</div>
+        <div class="post-info">
+          <div class="post-title">${p.title}</div>
+          <div class="post-meta">
+            <span class="post-type ${p.type === 'ads' ? 'ads' : 'organic'}">${p.type === 'ads' ? 'Anúncio' : 'Orgânico'}</span>
+          </div>
+        </div>
+        <div class="post-stats">
+          <div class="post-stat">
+            <div class="n">${p.comments}</div>
+            <div class="l">conversas</div>
+          </div>
+          <div class="post-stat" style="color:var(--ok);">
+            <div class="n" style="color:var(--ok);">${p.removed}</div>
+            <div class="l">leads</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // simulador
+  const echoPresets = {
+    lead: 'quero alugar o PS5 pro fim de semana, ainda tem disponível?',
+    duvida: 'como funciona o aluguel, é por diária ou por semana?',
+    curiosidade: 'que legal, nunca tinha visto esse tipo de aluguel',
+    spam: '[comentário ignorado — spam/ofensivo, sem envio de DM]'
+  };
+
+  const echoReplies = {
+    lead: () => (document.getElementById('cfgLeadEcho')?.value.trim()) || 'configure a DM de lead acima ↑',
+    duvida: () => (document.getElementById('cfgDuvidaEcho')?.value.trim()) || 'configure a DM de dúvida acima ↑',
+    curiosidade: () => (document.getElementById('cfgCuriosidadeEcho')?.value.trim()) || 'configure a DM de curiosidade acima ↑',
+    spam: () => 'Nenhuma DM é enviada — comentário ignorado ou removido pelo Triage antes de chegar aqui.'
+  };
+
+  const echoTagLabels = {
+    lead: 'lead quente · DM enviada',
+    duvida: 'dúvida · DM enviada',
+    curiosidade: 'curiosidade fria · DM enviada',
+    spam: 'sem envio de DM'
+  };
+
+  const echoPostRefMap = {
+    lead: 'PS5 liberado pro fim de semana 🎮',
+    duvida: 'Como funciona o aluguel da extratora',
+    curiosidade: 'Bastidores da loja',
+    spam: 'Secador de cabelo — promoção só essa semana'
+  };
+
+  let echoActiveCat = 'lead';
+
+  function runEchoSim(cat) {
+    const commentEl = document.getElementById('simCommentPreviewEcho');
+    const contentEl = document.getElementById('simContentEcho');
+    const refEl = document.getElementById('simPostRefEcho');
+    if (!commentEl || !contentEl) return;
+
+    const noDm = cat === 'spam';
+    commentEl.textContent = '"' + echoPresets[cat] + '"';
+
+    contentEl.innerHTML = `
+      <div class="bubble bubble-reply ${noDm ? 'removed-bubble' : ''}">
+        <span class="bubble-tag">${echoTagLabels[cat]}</span>
+        ${echoReplies[cat]()}
+      </div>
+    `;
+
+    if (refEl && echoPostRefMap[cat]) {
+      refEl.textContent = 'comentário no post · "' + echoPostRefMap[cat] + '"';
+    }
+  }
+
+  document.querySelectorAll('.sim-tab[data-group="echo"]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sim-tab[data-group="echo"]').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      echoActiveCat = tab.getAttribute('data-sim');
+      runEchoSim(echoActiveCat);
+    });
+  });
+
+  ['cfgLeadEcho', 'cfgDuvidaEcho', 'cfgCuriosidadeEcho'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.addEventListener('input', () => runEchoSim(echoActiveCat));
+  });
+
+  runEchoSim(echoActiveCat);
+</script>
+
+</body>
+</html>
